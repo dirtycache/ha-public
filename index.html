@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ha-public browser</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 2rem;
+      max-width: 960px;
+    }
+    h1 {
+      margin-bottom: 0.5rem;
+    }
+    #root {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      background: #fafafa;
+    }
+    ul {
+      list-style: none;
+      padding-left: 1rem;
+      margin: 0;
+    }
+    li {
+      margin: 2px 0;
+    }
+    .dir > .label {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .dir > .label::before {
+      content: "▸";
+      display: inline-block;
+      width: 1em;
+    }
+    .dir.expanded > .label::before {
+      content: "▾";
+    }
+    .file a {
+      text-decoration: none;
+      color: #0366d6;
+    }
+    .file a:hover {
+      text-decoration: underline;
+    }
+    .muted {
+      color: #888;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>ha-public file browser</h1>
+  <p class="muted">
+    This index is generated at runtime from the GitHub API and always reflects the
+    current contents of the <code>dirtycache/ha-public</code> repository.
+    Click a folder to expand it; click a file to open it (served by this site).
+  </p>
+
+  <div id="root">Loading…</div>
+
+  <script>
+    // === CONFIG ===
+    const OWNER = "dirtycache";
+    const REPO  = "ha-public";
+    const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
+    // Links should be relative to the site root (hapub.mid.net serves repo root)
+    function hrefForPath(path) {
+      return path; // e.g. "assets/sounds/foo.mp3"
+    }
+
+    const rootEl = document.getElementById("root");
+
+    async function fetchDir(path = "") {
+      const url = path ? `${API_BASE}/${encodeURIComponent(path)}` : API_BASE;
+      const resp = await fetch(url);
+      if (!resp.ok) {
+        throw new Error(`GitHub API error ${resp.status}`);
+      }
+      return resp.json();
+    }
+
+    function createDirElement(name, path) {
+      const li = document.createElement("li");
+      li.className = "dir";
+
+      const label = document.createElement("span");
+      label.className = "label";
+      label.textContent = name + "/";
+
+      const childrenList = document.createElement("ul");
+      childrenList.style.display = "none";
+
+      let loaded = false;
+      label.addEventListener("click", async () => {
+        if (!loaded) {
+          try {
+            const entries = await fetchDir(path);
+            entries.sort((a, b) => {
+              // dirs first, then files; then alpha
+              if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+              return a.name.localeCompare(b.name);
+            });
+            entries.forEach(entry => {
+              childrenList.appendChild(
+                entry.type === "dir"
+                  ? createDirElement(entry.name, entry.path)
+                  : createFileElement(entry.name, entry.path)
+              );
+            });
+            loaded = true;
+          } catch (err) {
+            childrenList.innerHTML = `<li class="muted">Error loading: ${err.message}</li>`;
+            loaded = true;
+          }
+        }
+        const expanded = childrenList.style.display === "block";
+        childrenList.style.display = expanded ? "none" : "block";
+        li.classList.toggle("expanded", !expanded);
+      });
+
+      li.appendChild(label);
+      li.appendChild(childrenList);
+      return li;
+    }
+
+    function createFileElement(name, path) {
+      const li = document.createElement("li");
+      li.className = "file";
+      const a = document.createElement("a");
+      a.textContent = name;
+      a.href = hrefForPath(path);
+      a.target = "_blank";
+      li.appendChild(a);
+      return li;
+    }
+
+    async function init() {
+      try {
+        const ul = document.createElement("ul");
+        const entries = await fetchDir("");
+        entries.sort((a, b) => {
+          if (a.type !== b.type) return a.type === "dir" ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+        entries.forEach(entry => {
+          ul.appendChild(
+            entry.type === "dir"
+              ? createDirElement(entry.name, entry.path)
+              : createFileElement(entry.name, entry.path)
+          );
+        });
+        rootEl.innerHTML = "";
+        rootEl.appendChild(ul);
+      } catch (err) {
+        rootEl.textContent = `Failed to load index: ${err.message}`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
