@@ -10,11 +10,12 @@ Nothing here should depend on `secrets.yaml` or contain private data (tokens, ho
 ## Layout
 
 ```text
-automations/   # Public/shareable automations (YAML snippets)
-scripts/       # Public/shareable scripts
-scenes/        # Public/shareable scenes
+automations/              # Public/shareable automations (YAML snippets)
+scripts/                  # Public/shareable scripts
+scenes/                   # Public/shareable scenes
 
 assets/
-  sounds/      # MP3/WAV/OGG files safe to expose publicly
-  images/      # Icons, backgrounds, etc.
+  sounds/                 # MP3/WAV/OGG files safe to expose publicly
+    alexa-ssml-encoded    # Same files, only: mono, 24 kHz, 48 kbps CBR
+  images/                 # Icons, backgrounds, etc.
 ```
