@@ -17,3 +17,4 @@ scenes/        # Public/shareable scenes
 assets/
   sounds/      # MP3/WAV/OGG files safe to expose publicly
   images/      # Icons, backgrounds, etc.
+```
