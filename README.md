@@ -16,6 +16,6 @@ scenes/                   # Public/shareable scenes
 
 assets/
   sounds/                 # MP3/WAV/OGG files safe to expose publicly
-    alexa-ssml-encoded    # Same files, only: mono, 24 kHz, 48 kbps CBR
+    alexa-ssml-encoded    # Converted: MP3, mono, 24 kHz, 48 kbps CBR
   images/                 # Icons, backgrounds, etc.
 ```
