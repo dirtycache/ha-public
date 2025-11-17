@@ -51,12 +51,12 @@
       font-weight: 600;
     }
     .dir > .label::before {
-      content: "â¸";
+      content: "[+] ";
       display: inline-block;
-      width: 1em;
+      width: 3ch;
     }
     .dir.expanded > .label::before {
-      content: "â¾";
+      content: "[-] ";
     }
     .file a {
       text-decoration: none;
@@ -82,8 +82,9 @@
   <h2>Repository file index</h2>
   <p class="muted">
     This index is generated at runtime from the GitHub API and always reflects the
-    current contents of the <a href="https://github.com/dirtycache/ha-public" target="_blank">dirtycache/ha-public</a> repository.
-    Click a folder to expand it; click a file to open it.
+    current contents of the
+    <a href="https://github.com/dirtycache/ha-public" target="_blank">dirtycache/ha-public</a>
+    repository. Click a folder to expand it; click a file to open it.
   </p>
 
   <div id="root">Loadingâ¦</div>
@@ -101,9 +102,14 @@
       document.getElementById("readme").innerHTML = marked.parse(md);
     }
 
-    // avoid linking .gitkeep files
-    function filterGitkeep(entries) {
-      return entries.filter(e => e.name !== ".gitkeep");
+    // hide housekeeping files from the index
+    function filterEntries(entries) {
+      const HIDDEN = new Set([
+        ".gitkeep",
+        "CNAME",
+        "index.html",
+      ]);
+      return entries.filter(e => !HIDDEN.has(e.name));
     }
 
     // file browser helpers
@@ -115,7 +121,7 @@
       const url = path ? `${API_BASE}/${encodeURIComponent(path)}` : API_BASE;
       const resp = await fetch(url);
       if (!resp.ok) throw new Error(`GitHub API error ${resp.status}`);
-      return filterGitkeep(await resp.json());
+      return filterEntries(await resp.json());
     }
 
     function createDirElement(name, path) {
